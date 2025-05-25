@@ -4,10 +4,10 @@ all:
 	@make build && make run
 
 build:
-	@echo "Building reconcile-service project..."
-	@go build -o reconcile-service ./cmd/app/
+	@echo "Building loan-service project..."
+	@go build -o loan-service ./cmd/app/
 	@echo "Done."
 
 run:
-	@echo "Running reconcile-service binary..."
-	@./reconcile-service
+	@echo "Running loan-service binary..."
+	@./loan-service

@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-gonic/gin v1.9.1
+	github.com/lib/pq v1.10.2
 	github.com/spf13/viper v1.14.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0

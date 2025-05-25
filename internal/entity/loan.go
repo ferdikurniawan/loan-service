@@ -9,7 +9,7 @@ import (
 
 type Loan struct {
 	ID              uuid.UUID `json:"loan_id"`
-	BorrowerID      int64     `json:"borrower_id"`
+	BorrowerID      uuid.UUID `json:"borrower_id"`
 	PrincipalAmount float64   `json:"principal_amount"`
 	InterestRate    float32   `json:"interest_rate"`
 	AgreementLetter string    `json:"agreement_letter"`
@@ -29,7 +29,7 @@ type LoanInvestment struct {
 }
 
 type LoanSubmitRequest struct {
-	BorrowerID      int64   `json:"-"`
+	BorrowerID      string  `json:"-"`
 	PrincipalAmount float64 `json:"principal_amount"`
 	InterestRate    float32 `json:"interest_rate"`
 	Reason          string  `json:"reason"`

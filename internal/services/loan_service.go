@@ -40,7 +40,7 @@ func NewLoanService(repo LoanRepo) *loanService {
 func (s *loanService) CreateLoan(ctx context.Context, loanRequest entity.LoanSubmitRequest) error {
 
 	loan := entity.Loan{
-		BorrowerID:      loanRequest.BorrowerID,
+		BorrowerID:      uuid.MustParse(loanRequest.BorrowerID),
 		PrincipalAmount: loanRequest.PrincipalAmount,
 		InterestRate:    loanRequest.InterestRate,
 		PublicID:        "public-id", //TODO use ULID

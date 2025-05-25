@@ -37,7 +37,7 @@ func newLoanRoutes(handler *gin.RouterGroup, svc services.LoanService) {
 // @Router /v1/find/{id} [get]
 func (r *loanRoutes) submitLoan(c *gin.Context) {
 
-	borrowerID := c.GetInt64("borrowerID")
+	borrowerID := c.GetString("borrowerID")
 	var req entity.LoanSubmitRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		httpHelper.Response(c,
