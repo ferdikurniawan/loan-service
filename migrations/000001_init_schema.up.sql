@@ -1,6 +1,6 @@
 CREATE TYPE loan_status AS ENUM (
 'proposed','approved','invested','disbursed'
-)
+);
 
 CREATE TABLE loan (
     loan_id uuid PRIMARY KEY,
