@@ -40,10 +40,11 @@ func DummyAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		staffID := c.GetHeader("X-Staff-ID")
 		borrowerID := c.GetHeader("X-Borrower-ID")
+		investorID := c.GetHeader("X-Investor-ID")
 
-		if staffID == "" && borrowerID == "" {
+		if staffID == "" && borrowerID == "" && investorID == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Missing X-Staff-ID or X-Borrower-ID",
+				"error": "Missing X-Staff-ID or X-Borrower-ID or X-Investor-ID",
 			})
 			return
 		}
@@ -53,6 +54,9 @@ func DummyAuthMiddleware() gin.HandlerFunc {
 		}
 		if borrowerID != "" {
 			c.Set("borrowerID", borrowerID)
+		}
+		if investorID != "" {
+			c.Set("investorID", investorID)
 		}
 
 		c.Next()

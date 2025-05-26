@@ -26,9 +26,9 @@ func NewLoanRepo(pg *postgres.Postgres) *loanRepo {
 func (r *loanRepo) InsertLoan(ctx context.Context, loan *entity.Loan) (*entity.Loan, error) {
 	var result entity.Loan
 
-	query := `INSERT INTO loan (public_id, borrower_id, principal_amount, interest_rate, status, created_at, updated_at)
-	VALUE ($1, $2, $3, $4, $5, $6)`
-	_, err := r.DB.ExecContext(ctx, query, loan.PublicID, loan.BorrowerID, loan.PrincipalAmount, loan.InterestRate, "now()", "now()")
+	query := `INSERT INTO loan (loan_id, borrower_id, principal_amount, interest_rate, status, created_at, updated_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	_, err := r.DB.ExecContext(ctx, query, loan.ID, loan.BorrowerID, loan.PrincipalAmount, loan.InterestRate, "proposed", "now()", "now()")
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (r *loanRepo) InsertLoan(ctx context.Context, loan *entity.Loan) (*entity.L
 	return &result, nil
 }
 
-func (r *loanRepo) UpdateLoanStatus(ctx context.Context, loan *entity.Loan, staffID int64) error {
+func (r *loanRepo) UpdateLoanStatus(ctx context.Context, loan *entity.Loan, staffID uuid.UUID) error {
 
 	//wrap queries within one transaction since there are multiple dependent ops:
 	//update status and loan log table record insertion
@@ -48,7 +48,7 @@ func (r *loanRepo) UpdateLoanStatus(ctx context.Context, loan *entity.Loan, staf
 
 	var updatedAt time.Time
 	var currentStatus string
-	query := `SELECT updated_at, current_status FROM loan WHERE loan_id = $1` //get loan detail, esp the updated_at to achieve optimistic locking
+	query := `SELECT updated_at, status FROM loan WHERE loan_id = $1` //get loan detail, esp the updated_at to achieve optimistic locking
 	err = tx.QueryRowContext(ctx, query, loan.ID).Scan(&updatedAt, &currentStatus)
 	if err == sql.ErrNoRows {
 		return fmt.Errorf("loan not found")
@@ -83,7 +83,7 @@ func (r *loanRepo) UpdateLoanStatus(ctx context.Context, loan *entity.Loan, staf
 	loanAfter.UpdatedAt = updateTime
 
 	queryLoanStatusHistory := `INSERT INTO loan_status_history (loan_id, before, after, updated_by, updated_at)
-	VALUE ($1, $2, $3, $4, $5)`
+	VALUES ($1, $2, $3, $4, $5)`
 	_, err = tx.Exec(queryLoanStatusHistory, loan.ID, loanPrev, loanAfter, staffID, "now()")
 	if err != nil {
 		return err
@@ -101,9 +101,9 @@ func (r *loanRepo) AddLoanInvestments(ctx context.Context, investment entity.Loa
 	defer tx.Rollback()
 
 	//1. Check amount & status of the loan
-	var amount float64
+	var amount int64
 	var status string
-	query := `SELECT amount, status FROM loan where loan_id = $1 FOR UPDATE`
+	query := `SELECT principal_amount, status FROM loan where loan_id = $1 FOR UPDATE`
 	err = tx.QueryRowContext(ctx, query, investment.LoanID).Scan(&amount, &status)
 	if err != nil {
 		return err
@@ -113,7 +113,7 @@ func (r *loanRepo) AddLoanInvestments(ctx context.Context, investment entity.Loa
 	}
 
 	//2. Get total investment
-	var totalInvested float64
+	var totalInvested int64
 	query = `SELECT COALESCE(SUM(amount), 0) FROM loan_investment where loan_id = $1`
 	err = tx.QueryRowContext(ctx, query, investment.LoanID).Scan(&totalInvested)
 	if err != nil {
@@ -127,7 +127,7 @@ func (r *loanRepo) AddLoanInvestments(ctx context.Context, investment entity.Loa
 
 	//3. Insert the investment
 	query = `INSERT INTO loan_investment (loan_investment_id, loan_id, investor_id, amount, invested_at)
-	VALUE ($1, $2, $3, $4, 'now()')`
+	VALUES ($1, $2, $3, $4, 'now()')`
 	_, err = tx.ExecContext(ctx, query, uuid.New(), investment.LoanID, investment.InvestorID, investment.Amount)
 	if err != nil {
 		return err
@@ -152,7 +152,7 @@ func (r *loanRepo) AddLoanInvestments(ctx context.Context, investment entity.Loa
 		loanAfter.UpdatedAt = updatedTime
 
 		queryLoanStatusHistory := `INSERT INTO loan_status_history (loan_id, before, after, updated_at)
-		VALUE ($1, $2, $3, $4)`
+		VALUES ($1, $2, $3, $4)`
 		_, err = tx.Exec(queryLoanStatusHistory, investment.LoanID, loanPrev, loanAfter, "now()")
 		if err != nil {
 			return err
@@ -165,19 +165,32 @@ func (r *loanRepo) AddLoanInvestments(ctx context.Context, investment entity.Loa
 
 func (r *loanRepo) GetLoanByID(ctx context.Context, loanID uuid.UUID) (*entity.Loan, error) {
 
-	var loan entity.Loan
+	var (
+		loan            entity.Loan
+		agreementLetter sql.NullString
+		updatedAt       sql.NullTime
+		disburseAt      sql.NullTime
+	)
 
 	query := `SELECT loan_id, borrower_id, principal_amount, interest_rate, agreement_letter, status, created_at, updated_at, disburse_at
 	FROM loan WHERE loan_id = $1`
 	err := r.DB.QueryRowContext(ctx, query, loanID).Scan(&loan.ID, &loan.BorrowerID,
-		&loan.PrincipalAmount, &loan.InterestRate, &loan.AgreementLetter, &loan.Status, &loan.CreatedAt,
-		&loan.UpdatedAt, &loan.DisburseAt)
+		&loan.PrincipalAmount, &loan.InterestRate, &agreementLetter, &loan.Status, &loan.CreatedAt,
+		&updatedAt, &disburseAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	loan.AgreementLetter = agreementLetter.String
+	loan.UpdatedAt = updatedAt.Time
+	loan.DisburseAt = disburseAt.Time
 
 	return &loan, err
 
 }
 
-func (r *loanRepo) DisburseLoan(ctx context.Context, loan *entity.Loan, staffID int64) error {
+func (r *loanRepo) DisburseLoan(ctx context.Context, loan *entity.Loan, staffID uuid.UUID) error {
 
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -185,8 +198,8 @@ func (r *loanRepo) DisburseLoan(ctx context.Context, loan *entity.Loan, staffID 
 	}
 	defer tx.Rollback()
 
-	query := `UPDATE loan SET status = $1, agreement_letter = $2, disburse_at = $3, updated_at = $4 WHERE loan_id = $4`
-	_, err = tx.ExecContext(ctx, query, loan.Status, loan.AgreementLetter, loan.DisburseAt, "now()")
+	query := `UPDATE loan SET status = $1, agreement_letter = $2, disburse_at = $3, updated_at = $5 WHERE loan_id = $4`
+	_, err = tx.ExecContext(ctx, query, loan.Status, loan.AgreementLetter, loan.DisburseAt, loan.ID, "now()")
 	if err != nil {
 		return err
 	}
@@ -201,7 +214,7 @@ func (r *loanRepo) DisburseLoan(ctx context.Context, loan *entity.Loan, staffID 
 	loanAfter.AgreementLetter = loan.AgreementLetter
 
 	queryLoanStatusHistory := `INSERT INTO loan_status_history (loan_id, before, after, updated_by, updated_at)
-	VALUE ($1, $2, $3, $4, $5)`
+	VALUES ($1, $2, $3, $4, $5)`
 	_, err = tx.Exec(queryLoanStatusHistory, loan.ID, loanPrev, loanAfter, staffID, "now()")
 	if err != nil {
 		return err

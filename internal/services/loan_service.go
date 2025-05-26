@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/ferdikurniawan/loan-service/internal/entity"
 	"github.com/google/uuid"
@@ -24,9 +25,9 @@ type (
 
 	LoanRepo interface {
 		InsertLoan(ctx context.Context, loan *entity.Loan) (*entity.Loan, error)
-		UpdateLoanStatus(ctx context.Context, loan *entity.Loan, staffID int64) error
+		UpdateLoanStatus(ctx context.Context, loan *entity.Loan, staffID uuid.UUID) error
 		AddLoanInvestments(ctx context.Context, investment entity.LoanInvestment) error
-		DisburseLoan(ctx context.Context, loan *entity.Loan, staffID int64) error
+		DisburseLoan(ctx context.Context, loan *entity.Loan, staffID uuid.UUID) error
 		GetLoanByID(ctx context.Context, loanID uuid.UUID) (*entity.Loan, error)
 	}
 )
@@ -40,14 +41,16 @@ func NewLoanService(repo LoanRepo) *loanService {
 func (s *loanService) CreateLoan(ctx context.Context, loanRequest entity.LoanSubmitRequest) error {
 
 	loan := entity.Loan{
+		ID:              uuid.New(),
 		BorrowerID:      uuid.MustParse(loanRequest.BorrowerID),
 		PrincipalAmount: loanRequest.PrincipalAmount,
 		InterestRate:    loanRequest.InterestRate,
-		PublicID:        "public-id", //TODO use ULID
-
 	}
 
 	_, err := s.repo.InsertLoan(ctx, &loan)
+	if err != nil {
+		log.Printf("[CreateLoan] error creating loan: %s", err.Error())
+	}
 
 	return err
 }
@@ -59,7 +62,10 @@ func (s *loanService) UpdateLoan(ctx context.Context, loanStatusRequest entity.L
 		Status: loanStatusRequest.Status,
 	}
 
-	err := s.repo.UpdateLoanStatus(ctx, &loan, loanStatusRequest.StaffID)
+	err := s.repo.UpdateLoanStatus(ctx, &loan, uuid.MustParse(loanStatusRequest.StaffID))
+	if err != nil {
+		log.Printf("[UpdateLoan] error update loan: %s", err.Error())
+	}
 	return err
 }
 
@@ -72,12 +78,16 @@ func (s *loanService) InvestLoan(ctx context.Context, loanInvestRequest entity.L
 	}
 
 	err := s.repo.AddLoanInvestments(ctx, investment)
+	if err != nil {
+		log.Printf("[InvestLoan] error invest loan: %s", err.Error())
+	}
 	//TODO send email stub if status is invested
 	return err
 }
 
 func (s *loanService) GetLoanByID(ctx context.Context, loanID uuid.UUID) (*entity.Loan, error) {
 	loan, err := s.repo.GetLoanByID(ctx, loanID)
+	loan.Returns = float64(loan.InterestRate/100) * float64(loan.PrincipalAmount)
 	return loan, err
 
 }
@@ -93,6 +103,7 @@ func (s *loanService) DisburseLoan(ctx context.Context, loanDisburseRequest enti
 
 	currentLoan, err := s.GetLoanByID(ctx, uuid.MustParse(loanDisburseRequest.LoanID))
 	if err != nil {
+		log.Printf("[DisburseLoan] error getting loan detail: %s", err.Error())
 		return err
 	}
 
@@ -100,6 +111,9 @@ func (s *loanService) DisburseLoan(ctx context.Context, loanDisburseRequest enti
 		return errors.New("loan principal amount is not met yet")
 	}
 
-	err = s.repo.DisburseLoan(ctx, &loan, loanDisburseRequest.StaffID)
+	err = s.repo.DisburseLoan(ctx, &loan, uuid.MustParse(loanDisburseRequest.StaffID))
+	if err != nil {
+		log.Printf("[DisburseLoan] error disburse loan: %s", err.Error())
+	}
 	return err
 }

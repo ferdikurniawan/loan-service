@@ -1,0 +1,294 @@
+{
+	"info": {
+		"_postman_id": "e7edbca6-2d66-4b08-9bca-f928356743c4",
+		"name": "loan-service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25349794"
+	},
+	"item": [
+		{
+			"name": "create loan",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Borrower-ID",
+						"value": "285fc09c-1ed5-4b51-861a-1f6855b1d440",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"principal_amount\":1000000,\n    \"interest_rate\":12.0,\n    \"reason\":\"modal usaha\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/v1/loans",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"loans"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "approve loan",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "X-Borrower-ID",
+						"value": "285fc09c-1ed5-4b51-861a-1f6855b1d440",
+						"type": "text"
+					},
+					{
+						"key": "X-Staff-ID",
+						"value": "bf2a4034-b8bc-4317-8cc2-b7f81624ea7e",
+						"type": "text"
+					},
+					{
+						"key": "X-Investor-ID",
+						"value": "c94dc249-5af7-46ec-ad85-be767b0870fc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\":\"approved\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/v1/loans/1fb9dbb3-4927-48df-9e94-1bfafc6b982b/status",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"loans",
+						"1fb9dbb3-4927-48df-9e94-1bfafc6b982b",
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "invest loan",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Borrower-ID",
+						"value": "285fc09c-1ed5-4b51-861a-1f6855b1d440",
+						"type": "text"
+					},
+					{
+						"key": "X-Staff-ID",
+						"value": "bf2a4034-b8bc-4317-8cc2-b7f81624ea7e",
+						"type": "text"
+					},
+					{
+						"key": "X-Investor-ID",
+						"value": "c94dc249-5af7-46ec-ad85-be767b0870fc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\":500000\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/v1/loans/1fb9dbb3-4927-48df-9e94-1bfafc6b982b/investments",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"loans",
+						"1fb9dbb3-4927-48df-9e94-1bfafc6b982b",
+						"investments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "invest loan Copy",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Borrower-ID",
+						"value": "285fc09c-1ed5-4b51-861a-1f6855b1d440",
+						"type": "text"
+					},
+					{
+						"key": "X-Staff-ID",
+						"value": "bf2a4034-b8bc-4317-8cc2-b7f81624ea7e",
+						"type": "text"
+					},
+					{
+						"key": "X-Investor-ID",
+						"value": "2a23b86a-e863-4b78-8750-808de61331e7",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\":500000\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/v1/loans/1fb9dbb3-4927-48df-9e94-1bfafc6b982b/investments",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"loans",
+						"1fb9dbb3-4927-48df-9e94-1bfafc6b982b",
+						"investments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "disburse loan",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Borrower-ID",
+						"value": "285fc09c-1ed5-4b51-861a-1f6855b1d440",
+						"type": "text"
+					},
+					{
+						"key": "X-Staff-ID",
+						"value": "bf2a4034-b8bc-4317-8cc2-b7f81624ea7e",
+						"type": "text"
+					},
+					{
+						"key": "X-Investor-ID",
+						"value": "c94dc249-5af7-46ec-ad85-be767b0870fc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\":\"approved\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/v1/loans/1fb9dbb3-4927-48df-9e94-1bfafc6b982b/status",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"loans",
+						"1fb9dbb3-4927-48df-9e94-1bfafc6b982b",
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get loan",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Borrower-ID",
+						"value": "285fc09c-1ed5-4b51-861a-1f6855b1d440",
+						"type": "text"
+					},
+					{
+						"key": "X-Staff-ID",
+						"value": "bf2a4034-b8bc-4317-8cc2-b7f81624ea7e",
+						"type": "text"
+					},
+					{
+						"key": "X-Investor-ID",
+						"value": "c94dc249-5af7-46ec-ad85-be767b0870fc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\":\"approved\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/v1/loans/1fb9dbb3-4927-48df-9e94-1bfafc6b982b",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"loans",
+						"1fb9dbb3-4927-48df-9e94-1bfafc6b982b"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
