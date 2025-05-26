@@ -31,7 +31,7 @@ func NewRouter(handler *gin.Engine, s Services) {
 	h := handler.Group("v1")
 	h.Use(DummyAuthMiddleware())
 	{
-		newLoanRoutes(h, s.LoanService) //TODO use custom middleware for AUTH
+		newLoanRoutes(h, s.LoanService)
 	}
 }
 

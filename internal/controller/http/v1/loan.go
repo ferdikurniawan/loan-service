@@ -27,15 +27,6 @@ func newLoanRoutes(handler *gin.RouterGroup, svc services.LoanService) {
 	handler.GET("/loans/:loan_id", r.getLoan)                 //get loan detail
 }
 
-// Submit Loan godoc
-// @Tags SubmitLoan v1
-// @Summary Submit Loan API
-// @Description Submit LOan API
-// @Param id path string true "id"
-// @Accept json
-// @Produce json
-// @Success 200 {object} entity.ApiResponse{data=entity.CrudDTO}
-// @Router /v1/find/{id} [get]
 func (r *loanRoutes) submitLoan(c *gin.Context) {
 
 	borrowerID := c.GetString("borrowerID")
@@ -51,11 +42,11 @@ func (r *loanRoutes) submitLoan(c *gin.Context) {
 	}
 	req.BorrowerID = borrowerID //attach borrowerID to the request object since it does not exist in request payload, but obtained through context
 
-	err := r.loanService.CreateLoan(c, req)
+	loan, err := r.loanService.CreateLoan(c, req)
 	if err != nil {
 		httpHelper.Response(c,
 			false,
-			&entity.ErrorResponse{Code: 500, Type: "server_error", Message: err.Error()}, //TODO human readable error mapping
+			&entity.ErrorResponse{Code: 500, Type: "server_error", Message: err.Error()},
 			nil,
 			http.StatusInternalServerError,
 		)
@@ -65,7 +56,7 @@ func (r *loanRoutes) submitLoan(c *gin.Context) {
 	httpHelper.Response(c,
 		true,
 		nil,
-		nil,
+		loan,
 		http.StatusOK,
 	)
 }

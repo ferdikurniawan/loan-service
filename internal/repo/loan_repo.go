@@ -27,11 +27,16 @@ func (r *loanRepo) InsertLoan(ctx context.Context, loan *entity.Loan) (*entity.L
 	var result entity.Loan
 
 	query := `INSERT INTO loan (loan_id, borrower_id, principal_amount, interest_rate, status, created_at, updated_at)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	_, err := r.DB.ExecContext(ctx, query, loan.ID, loan.BorrowerID, loan.PrincipalAmount, loan.InterestRate, "proposed", "now()", "now()")
+	VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING loan_id, created_at, updated_at`
+	err := r.DB.QueryRowContext(ctx, query, loan.ID, loan.BorrowerID, loan.PrincipalAmount, loan.InterestRate, "proposed", "now()", "now()").Scan(&result.ID, &result.CreatedAt, &result.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
+
+	result.BorrowerID = loan.BorrowerID
+	result.PrincipalAmount = loan.PrincipalAmount
+	result.InterestRate = loan.InterestRate
+	result.Status = "proposed"
 
 	return &result, nil
 }

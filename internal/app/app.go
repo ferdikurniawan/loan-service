@@ -3,11 +3,8 @@ package app
 import (
 	"log"
 
-	_ "github.com/ferdikurniawan/loan-service/docs"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	swaggofiles "github.com/swaggo/files"
-	ginswagger "github.com/swaggo/gin-swagger"
 	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
 
 	"github.com/ferdikurniawan/loan-service/internal/pkg/postgres"
@@ -49,9 +46,6 @@ func Run(config *config.Config) {
 	handler.Use(gin.Logger())
 	handler.Use(gzip.Gzip(gzip.DefaultCompression))
 	handler.Use(gin.Recovery())
-
-	// swagger
-	handler.GET("/swagger/*any", ginswagger.WrapHandler(swaggofiles.Handler))
 
 	v1.NewRouter(handler, v1.Services{
 		Cfg:         config,

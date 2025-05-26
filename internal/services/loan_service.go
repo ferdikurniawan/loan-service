@@ -12,7 +12,7 @@ import (
 //go:generate mockgen -source=loan_service.go -package=mock -destination=mock/loan_service_mock.go
 type (
 	LoanService interface {
-		CreateLoan(ctx context.Context, loanRequest entity.LoanSubmitRequest) error
+		CreateLoan(ctx context.Context, loanRequest entity.LoanSubmitRequest) (*entity.Loan, error)
 		UpdateLoan(ctx context.Context, loanStatusRequest entity.LoanUpdateRequest) error
 		InvestLoan(ctx context.Context, loanInvestRequest entity.LoanInvestRequest) error
 		DisburseLoan(ctx context.Context, loanDisburseRequest entity.LoanDisburseRequest) error
@@ -38,7 +38,7 @@ func NewLoanService(repo LoanRepo) *loanService {
 	}
 }
 
-func (s *loanService) CreateLoan(ctx context.Context, loanRequest entity.LoanSubmitRequest) error {
+func (s *loanService) CreateLoan(ctx context.Context, loanRequest entity.LoanSubmitRequest) (*entity.Loan, error) {
 
 	loan := entity.Loan{
 		ID:              uuid.New(),
@@ -47,12 +47,12 @@ func (s *loanService) CreateLoan(ctx context.Context, loanRequest entity.LoanSub
 		InterestRate:    loanRequest.InterestRate,
 	}
 
-	_, err := s.repo.InsertLoan(ctx, &loan)
+	res, err := s.repo.InsertLoan(ctx, &loan)
 	if err != nil {
 		log.Printf("[CreateLoan] error creating loan: %s", err.Error())
 	}
 
-	return err
+	return res, err
 }
 
 func (s *loanService) UpdateLoan(ctx context.Context, loanStatusRequest entity.LoanUpdateRequest) error {
@@ -81,12 +81,15 @@ func (s *loanService) InvestLoan(ctx context.Context, loanInvestRequest entity.L
 	if err != nil {
 		log.Printf("[InvestLoan] error invest loan: %s", err.Error())
 	}
-	//TODO send email stub if status is invested
+
 	return err
 }
 
 func (s *loanService) GetLoanByID(ctx context.Context, loanID uuid.UUID) (*entity.Loan, error) {
 	loan, err := s.repo.GetLoanByID(ctx, loanID)
+	if err != nil {
+		return nil, err
+	}
 	loan.Returns = float64(loan.InterestRate/100) * float64(loan.PrincipalAmount)
 	return loan, err
 
